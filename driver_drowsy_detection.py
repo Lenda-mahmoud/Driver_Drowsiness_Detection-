@@ -32,7 +32,6 @@ import os
 
 dataset_folder = "/root/.cache/kagglehub/datasets/ismailnasri20/driver-drowsiness-dataset-ddd/versions/1/Driver Drowsiness Dataset (DDD)"
 
-# استعرض الملفات والمجلدات الداخلية
 files = os.listdir(dataset_folder)
 print("Files inside dataset folder:", files)
 
@@ -41,7 +40,6 @@ import os
 non_drowsy_path = "/root/.cache/kagglehub/datasets/ismailnasri20/driver-drowsiness-dataset-ddd/versions/1/Driver Drowsiness Dataset (DDD)/Non Drowsy"
 drowsy_path = "/root/.cache/kagglehub/datasets/ismailnasri20/driver-drowsiness-dataset-ddd/versions/1/Driver Drowsiness Dataset (DDD)/Drowsy"
 
-# استعرض أول 5 ملفات في كل مجلد
 print("Non Drowsy files:", os.listdir(non_drowsy_path)[:5])
 print("Drowsy files:", os.listdir(drowsy_path)[:5])
 
@@ -61,28 +59,25 @@ image_size = (64, 64)
 data = []
 labels = []
 
-# تحميل صور Non Drowsy
 for file in os.listdir(non_drowsy_path):
     img_path = os.path.join(non_drowsy_path, file)
     img = cv2.imread(img_path)
     img = cv2.resize(img, image_size)
     data.append(img)
-    labels.append(0)  # 0 = غير نعسان
+    labels.append(0)  
 
-# تحميل صور Drowsy
 for file in os.listdir(drowsy_path):
     img_path = os.path.join(drowsy_path, file)
     img = cv2.imread(img_path)
     img = cv2.resize(img, image_size)
     data.append(img)
-    labels.append(1)  # 1 = نعسان
+    labels.append(1)  
 
-data = np.array(data, dtype="float32") / 255.0  # تطبيع القيم بين 0 و 1
+data = np.array(data, dtype="float32") / 255.0  
 labels = np.array(labels)
 
 X_train, X_test, y_train, y_test = train_test_split(data, labels, test_size=0.2, random_state=42)
 
-# تحويل التصنيفات إلى فئات One-Hot Encoding
 y_train = to_categorical(y_train, num_classes=2)
 y_test = to_categorical(y_test, num_classes=2)
 
@@ -95,7 +90,7 @@ from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Conv2D, MaxPooling2D, Flatten, Dense, Dropout, LSTM, TimeDistributed, BatchNormalization, Reshape
 from tensorflow.keras.optimizers import Adam
 
-# Define CNN-LSTM model
+#  CNN-LSTM model
 model = Sequential([
     # CNN Feature Extraction
     TimeDistributed(Conv2D(32, (3, 3), activation='relu', padding='same'), input_shape=(1, 64, 64, 3)),
@@ -107,7 +102,7 @@ model = Sequential([
     TimeDistributed(Flatten()),
 
     # Reshape for LSTM
-    Reshape((1, -1)),  # Convert to (batch, time_step, features)
+    Reshape((1, -1)),  
 
     # LSTM for Temporal Analysis
     LSTM(128, return_sequences=False),
@@ -116,10 +111,9 @@ model = Sequential([
     # Fully Connected Layers
     Dense(64, activation='relu'),
     Dropout(0.3),
-    Dense(2, activation='softmax')  # 2 Classes: Drowsy & Non-Drowsy
+    Dense(2, activation='softmax')  
 ])
 
-# Compile Model
 model.compile(optimizer=Adam(learning_rate=0.001), loss='categorical_crossentropy', metrics=['accuracy'])
 
 # Train Model
@@ -141,28 +135,25 @@ from google.colab.patches import cv2_imshow
 # Load trained model
 model = load_model("drowsiness_model.keras")
 
-# Define video path
 video_path = "/content/istockphoto-618279894-640_adpp_is.mp4"
 cap = cv2.VideoCapture(video_path)
 
 image_size = (64, 64)
-frame_queue = deque(maxlen=10)  # Store last 10 frames
+frame_queue = deque(maxlen=10)  
 
 while cap.isOpened():
     ret, frame = cap.read()
     if not ret:
         break
 
-    # Preprocess frame
     frame_resized = cv2.resize(frame, image_size)
     frame_normalized = frame_resized.astype("float32") / 255.0
 
-    # Store frame in queue
     frame_queue.append(frame_normalized)
 
     if len(frame_queue) == 10:
-        input_frame = np.expand_dims(frame_queue[-1], axis=0)  # Shape: (1, 64, 64, 3)
-        input_sequence = np.expand_dims(input_frame, axis=0)   # Shape: (1, 1, 64, 64, 3)
+        input_frame = np.expand_dims(frame_queue[-1], axis=0)  
+        input_sequence = np.expand_dims(input_frame, axis=0)   
 
         prediction = model.predict(input_sequence)
 
